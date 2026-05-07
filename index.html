@@ -232,6 +232,53 @@
 
         }
 
+        /* 3. 惡搞 CD-R (圓形光碟感) */
+.cd-card {
+    width: 170px; height: 170px; border-radius: 50%;
+    background: linear-gradient(135deg, #ddd 0%, #999 50%, #ddd 100%);
+    display: flex; align-items: center; justify-content: center;
+    border: 5px solid rgba(255,255,255,0.3);
+}
+.cd-center { width: 35px; height: 35px; background: #222; border-radius: 50%; }
+.cd-label { position: absolute; top: 25px; font-family: var(--hand); color: #444; font-size: 1rem; transform: rotate(-15deg); }
+
+/* 4. 心理測驗考卷樣式 */
+.quiz-card { width: 220px; background: #fffdf0; padding: 20px; border-top: 5px solid #3b82f6; }
+.quiz-opt { 
+    display: block; margin: 10px 0; padding: 8px; border: 1px dashed #ccc; 
+    cursor: pointer; font-family: var(--hand); font-size: 1.1rem; text-align: center;
+}
+.quiz-opt:hover { background: #fef08a; }
+
+/* 5. 歌詞配對小遊戲樣式 */
+.game-card { 
+    width: 230px !important; 
+    background: rgba(40,40,40,0.95) !important; 
+    color: white; 
+    padding: 15px !important; 
+    border-radius: 15px; 
+}
+.game-grid { 
+    width: 188px !important; 
+    margin: 10px auto 0 !important; 
+    display: block !important; 
+    overflow: hidden;
+}
+.tile { 
+    width: 42px !important; 
+    height: 42px !important; 
+    float: left !important; 
+    margin: 2px !important; 
+    background: rgba(255,255,255,0.2); 
+    border-radius: 4px; 
+    display: flex; 
+    align-items: center; 
+    justify-content: center; 
+    font-size: 1.2rem; 
+    color: transparent; 
+    cursor: pointer; 
+}
+.tile.open { background: white !important; color: #333 !important; }
 
 
     </style>
@@ -342,7 +389,26 @@
 
     <audio id="audio" src="終於明白.mp3" loop></audio>
 
+    <div class="card cd-card draggable" onclick="playSpecialMusic()">
+    <div class="cd-label">惡搞版(別聽)</div>
+    <div class="cd-center"></div>
+</div>
 
+<div class="card quiz-card draggable">
+    <h4 style="font-family: var(--hand); text-align:center;">遺憾診斷書</h4>
+    <div id="quizBody">
+        <p style="font-size: 0.8rem; margin: 10px 0; text-align:center;">回到那個下午，你會？</p>
+        <span class="quiz-opt" onclick="diagnose(1)">大聲告別</span>
+        <span class="quiz-opt" onclick="diagnose(2)">默默離開</span>
+    </div>
+</div>
+
+<div class="card game-card draggable">
+    <p style="text-align: center; font-family: var(--hand);">摸魚專區：歌詞配對</p>
+    <div class="game-grid" id="gameGrid"></div>
+</div>
+
+<audio id="audioSpecial" src="終於明白_DJ版.mp3" loop></audio>
 
     <script>
 
@@ -466,6 +532,62 @@
 
         }
 
+        // --- 互動功能邏輯 ---
+
+// 1. 心理測驗診斷結果
+function diagnose(val) {
+    const body = document.getElementById('quizBody');
+    const msgs = ["", "診斷：你是深情戰士，明白得太晚，愛得太深。", "診斷：你是瀟灑型聽眾，這首歌是你的背景音樂。"];
+    body.innerHTML = `<p style="font-family:var(--hand); text-align:center; padding:15px; color:#64748b;">${msgs[val]}</p>`;
+}
+
+// 2. 切換惡搞版音樂
+const specialAudio = document.getElementById('audioSpecial');
+function playSpecialMusic() {
+    // 停止原版
+    audio.pause(); 
+    playerCard.classList.remove('playing');
+    
+    // 播放惡搞版
+    specialAudio.currentTime = 0;
+    specialAudio.play();
+    alert("💿 切換至：終於明白 (DJ土嗨惡搞版)");
+}
+
+// 3. 小遊戲：歌詞配對初始化
+const icons = ['🎸','🥁','🎸','🥁','🎹','🎤','🎹','🎤'];
+let shuffled = icons.sort(() => 0.5 - Math.random());
+const grid = document.getElementById('gameGrid');
+let selectedTiles = [];
+
+shuffled.forEach(icon => {
+    const tile = document.createElement('div');
+    tile.className = 'tile';
+    tile.innerHTML = icon;
+    
+    // 阻止遊戲點擊時觸發卡片拖曳
+    tile.onmousedown = (e) => e.stopPropagation();
+    
+    tile.onclick = (e) => {
+        e.stopPropagation();
+        if (selectedTiles.length < 2 && !tile.classList.contains('open')) {
+            tile.classList.add('open');
+            selectedTiles.push(tile);
+            
+            if (selectedTiles.length === 2) {
+                if (selectedTiles[0].innerHTML === selectedTiles[1].innerHTML) {
+                    selectedTiles = [];
+                } else {
+                    setTimeout(() => {
+                        selectedTiles.forEach(t => t.classList.remove('open'));
+                        selectedTiles = [];
+                    }, 600);
+                }
+            }
+        }
+    };
+    grid.appendChild(tile);
+});
     </script>
 
 </body>
