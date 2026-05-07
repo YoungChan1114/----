@@ -410,185 +410,151 @@
 
 <audio id="audioSpecial" src="終於明白_DJ版.mp3" loop></audio>
 
-    <script>
+<script>
+    // 1. 初始化位置與隨機旋轉
+    const cards = document.querySelectorAll('.draggable');
+    let highestZ = 20; // 提高層級基數
 
-        // 1. 初始化位置與隨機旋轉
+    cards.forEach(card => {
+        const randomRot = Math.floor(Math.random() * 20) - 10;
+        card.style.transform = `rotate(${randomRot}deg)`;
+        
+        if(!card.style.top) card.style.top = (Math.random() * 50 + 10) + "%";
+        if(!card.style.left) card.style.left = (Math.random() * 60 + 10) + "%";
 
-        const cards = document.querySelectorAll('.draggable');
+        // --- 核心修改：分離拖曳與短按 ---
+        let isMoving = false;
+        let startX, startY;
+        let offset = { x: 0, y: 0 };
 
-        let highestZ = 10;
+        card.addEventListener('mousedown', (e) => {
+            // 排除連結、按鈕、小遊戲方塊、測驗選項的原始點擊，交由它們自己的邏輯處理
+            if(e.target.tagName === 'A' || e.target.tagName === 'BUTTON' || e.target.closest('.tile') || e.target.closest('.quiz-opt')) return;
 
+            isMoving = false; // 重置位移狀態
+            startX = e.clientX;
+            startY = e.clientY;
 
-
-        cards.forEach(card => {
-
-            const randomRot = Math.floor(Math.random() * 20) - 10;
-
-            card.style.transform = `rotate(${randomRot}deg)`;
-
+            highestZ++;
+            card.style.zIndex = highestZ;
             
+            offset.x = e.clientX - card.offsetLeft;
+            offset.y = e.clientY - card.offsetTop;
 
-            // 隨機初始散落位置 (讓桌面看起來自然)
+            const onMouseMove = (moveEvent) => {
+                const diffX = Math.abs(moveEvent.clientX - startX);
+                const diffY = Math.abs(moveEvent.clientY - startY);
 
-            if(!card.style.top) card.style.top = (Math.random() * 50 + 10) + "%";
+                // 如果位移超過 5 像素，判定為「拖曳移動」
+                if (diffX > 5 || diffY > 5) {
+                    isMoving = true;
+                    card.style.left = (moveEvent.clientX - offset.x) + 'px';
+                    card.style.top = (moveEvent.clientY - offset.y) + 'px';
+                    card.style.margin = '0';
+                }
+            };
 
-            if(!card.style.left) card.style.left = (Math.random() * 60 + 10) + "%";
+            const onMouseUp = () => {
+                document.removeEventListener('mousemove', onMouseMove);
+                document.removeEventListener('mouseup', onMouseUp);
 
+                // --- 判定活動觸發 ---
+                // 如果放開滑鼠時 isMoving 仍為 false，代表這是「短按」
+                if (!isMoving) {
+                    // 根據卡片類型執行對應功能
+                    if (card.classList.contains('polaroid-card')) {
+                        checkFlip(null, card);
+                    } else if (card.classList.contains('cd-card')) {
+                        playSpecialMusic();
+                    } else if (card.classList.contains('sticky-note')) {
+                        copyURL();
+                    }
+                }
+            };
 
-
-            // 拖拽邏輯
-
-            let isDragging = false;
-
-            let startPos = { x: 0, y: 0 };
-
-            let currentPos = { x: 0, y: 0 };
-
-
-
-            card.addEventListener('mousedown', (e) => {
-
-                if(e.target.tagName === 'A' || e.target.tagName === 'BUTTON') return;
-
-                isDragging = true;
-
-                highestZ++;
-
-                card.style.zIndex = highestZ;
-
-                startPos.x = e.clientX - card.offsetLeft;
-
-                startPos.y = e.clientY - card.offsetTop;
-
-            });
-
-
-
-            document.addEventListener('mousemove', (e) => {
-
-                if (!isDragging) return;
-
-                card.style.left = (e.clientX - startPos.x) + 'px';
-
-                card.style.top = (e.clientY - startPos.y) + 'px';
-
-                card.style.margin = '0';
-
-            });
-
-
-
-            document.addEventListener('mouseup', () => isDragging = false);
-
+            document.addEventListener('mousemove', onMouseMove);
+            document.addEventListener('mouseup', onMouseUp);
         });
+    });
 
+    // 2. 翻轉卡片邏輯 (由短按觸發)
+    function checkFlip(e, el) {
+        el.classList.toggle('flipped');
+    }
 
-
-        // 2. 翻轉卡片邏輯 (偵測是拖拽還是點擊)
-
-        function checkFlip(e, el) {
-
-            // 如果是在拖拽，就不觸發翻轉
-
-            el.classList.toggle('flipped');
-
+    // 3. 音樂播放 (原版)
+    const audio = document.getElementById('audio');
+    const playerCard = document.getElementById('playerCard');
+    function togglePlay() {
+        if(audio.paused) {
+            audio.play();
+            playerCard.classList.add('playing');
+        } else {
+            audio.pause();
+            playerCard.classList.remove('playing');
         }
+    }
 
+    // 4. 分享功能
+    function copyURL() {
+        navigator.clipboard.writeText(window.location.href);
+        alert("連結已複製，感謝支持作品！");
+    }
 
+    // --- 互動功能邏輯 ---
 
-        // 3. 音樂播放
+    // 1. 心理測驗診斷結果 (由短按選項直接觸發)
+    function diagnose(val) {
+        const body = document.getElementById('quizBody');
+        const msgs = ["", "診斷：你是深情戰士，明白得太晚，愛得太深。", "診斷：你是瀟灑型聽眾，這首歌是你的背景音樂。"];
+        body.innerHTML = `<p style="font-family:var(--hand); text-align:center; padding:15px; color:#64748b;">${msgs[val]}</p>`;
+    }
 
-        const audio = document.getElementById('audio');
+    // 2. 切換惡搞版音樂
+    const specialAudio = document.getElementById('audioSpecial');
+    function playSpecialMusic() {
+        audio.pause(); 
+        playerCard.classList.remove('playing');
+        specialAudio.currentTime = 0;
+        specialAudio.play();
+        alert("💿 切換至：終於明白 (DJ土嗨惡搞版)");
+    }
 
-        const playerCard = document.getElementById('playerCard');
+    // 3. 小遊戲：歌詞配對初始化
+    const icons = ['🎸','🥁','🎸','🥁','🎹','🎤','🎹','🎤'];
+    let shuffled = icons.sort(() => 0.5 - Math.random());
+    const grid = document.getElementById('gameGrid');
+    let selectedTiles = [];
 
-        function togglePlay() {
-
-            if(audio.paused) {
-
-                audio.play();
-
-                playerCard.classList.add('playing');
-
-            } else {
-
-                audio.pause();
-
-                playerCard.classList.remove('playing');
-
-            }
-
-        }
-
-
-
-        // 4. 分享功能
-
-        function copyURL() {
-
-            navigator.clipboard.writeText(window.location.href);
-
-            alert("連結已複製，感謝支持作品！");
-
-        }
-
-        // --- 互動功能邏輯 ---
-
-// 1. 心理測驗診斷結果
-function diagnose(val) {
-    const body = document.getElementById('quizBody');
-    const msgs = ["", "診斷：你是深情戰士，明白得太晚，愛得太深。", "診斷：你是瀟灑型聽眾，這首歌是你的背景音樂。"];
-    body.innerHTML = `<p style="font-family:var(--hand); text-align:center; padding:15px; color:#64748b;">${msgs[val]}</p>`;
-}
-
-// 2. 切換惡搞版音樂
-const specialAudio = document.getElementById('audioSpecial');
-function playSpecialMusic() {
-    // 停止原版
-    audio.pause(); 
-    playerCard.classList.remove('playing');
-    
-    // 播放惡搞版
-    specialAudio.currentTime = 0;
-    specialAudio.play();
-    alert("💿 切換至：終於明白 (DJ土嗨惡搞版)");
-}
-
-// 3. 小遊戲：歌詞配對初始化
-const icons = ['🎸','🥁','🎸','🥁','🎹','🎤','🎹','🎤'];
-let shuffled = icons.sort(() => 0.5 - Math.random());
-const grid = document.getElementById('gameGrid');
-let selectedTiles = [];
-
-shuffled.forEach(icon => {
-    const tile = document.createElement('div');
-    tile.className = 'tile';
-    tile.innerHTML = icon;
-    
-    // 阻止遊戲點擊時觸發卡片拖曳
-    tile.onmousedown = (e) => e.stopPropagation();
-    
-    tile.onclick = (e) => {
-        e.stopPropagation();
-        if (selectedTiles.length < 2 && !tile.classList.contains('open')) {
-            tile.classList.add('open');
-            selectedTiles.push(tile);
-            
-            if (selectedTiles.length === 2) {
-                if (selectedTiles[0].innerHTML === selectedTiles[1].innerHTML) {
-                    selectedTiles = [];
-                } else {
-                    setTimeout(() => {
-                        selectedTiles.forEach(t => t.classList.remove('open'));
+    shuffled.forEach(icon => {
+        const tile = document.createElement('div');
+        tile.className = 'tile';
+        tile.innerHTML = icon;
+        
+        // 阻止小方塊按下時啟動卡片的拖曳偵聽
+        tile.onmousedown = (e) => e.stopPropagation();
+        
+        tile.onclick = (e) => {
+            e.stopPropagation();
+            if (selectedTiles.length < 2 && !tile.classList.contains('open')) {
+                tile.classList.add('open');
+                selectedTiles.push(tile);
+                
+                if (selectedTiles.length === 2) {
+                    if (selectedTiles[0].innerHTML === selectedTiles[1].innerHTML) {
                         selectedTiles = [];
-                    }, 600);
+                    } else {
+                        setTimeout(() => {
+                            selectedTiles.forEach(t => t.classList.remove('open'));
+                            selectedTiles = [];
+                        }, 600);
+                    }
                 }
             }
-        }
-    };
-    grid.appendChild(tile);
-});
-    </script>
+        };
+        grid.appendChild(tile);
+    });
+</script>
 
 </body>
 
