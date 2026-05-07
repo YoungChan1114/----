@@ -139,21 +139,61 @@
     const cards = document.querySelectorAll('.draggable');
     let highestZ = 20;
 
+    // --- 1. 開場引導層邏輯 ---
+    // 建立引導提示元素
+    const hint = document.createElement('div');
+    hint.id = 'start-hint';
+    hint.innerHTML = `
+        <div style="text-align:center; color:white; font-family:'ChenYuluoyan', cursive; pointer-events:none;">
+            <p style="font-size: 2.5rem; margin-bottom: 20px;">終於明白</p>
+            <p style="font-size: 1.2rem; opacity: 0.8; letter-spacing: 2px;">試著翻動、移動桌面上的碎片<br>找尋隱藏的驚喜</p>
+            <div style="margin-top: 30px; animation: bounce 2s infinite;">
+                <i class="fa-solid fa-hand-pointer" style="font-size: 2rem; opacity: 0.5;"></i>
+            </div>
+        </div>
+        <style>
+            #start-hint {
+                position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+                background: rgba(0,0,0,0.7); display: flex; justify-content: center; align-items: center;
+                z-index: 9999; cursor: pointer; transition: opacity 1s ease;
+            }
+            @keyframes bounce { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-10px); } }
+        </style>
+    `;
+    document.body.appendChild(hint);
+
+    // 點擊任何地方移除引導
+    const removeHint = () => {
+        hint.style.opacity = '0';
+        setTimeout(() => hint.remove(), 1000);
+        window.removeEventListener('mousedown', removeHint);
+        window.removeEventListener('touchstart', removeHint);
+    };
+    window.addEventListener('mousedown', removeHint);
+    window.addEventListener('touchstart', removeHint);
+
+    // --- 2. 卡片初始化 ---
     cards.forEach(card => {
         card.style.transform = `rotate(${Math.floor(Math.random() * 20) - 10}deg)`;
         if(!card.style.top) card.style.top = (Math.random() * 50 + 10) + "%";
         if(!card.style.left) card.style.left = (Math.random() * 60 + 10) + "%";
 
+        // 核心修改：如果是主題拍立得，設定為初始最高層級
+        if (card.classList.contains('polaroid-card')) {
+            card.style.zIndex = 50;
+            highestZ = 51; 
+        } else {
+            card.style.zIndex = Math.floor(Math.random() * 10) + 10;
+        }
+
         let moved = false;
         let startX, startY;
         let offset = { x: 0, y: 0 };
 
-        // 統一取得座標的函式 (相容手機與電腦)
         const getEventX = (e) => e.touches ? e.touches[0].clientX : e.clientX;
         const getEventY = (e) => e.touches ? e.touches[0].clientY : e.clientY;
 
         const onDown = (e) => {
-            // 排除按鈕、連結、遊戲方塊等 UI
             if(e.target.closest('button') || e.target.closest('a') || e.target.closest('.tile') || e.target.closest('.quiz-opt')) return;
 
             moved = false;
@@ -166,14 +206,12 @@
             offset.x = startX - card.offsetLeft;
             offset.y = startY - card.offsetTop;
 
-            // 監聽移動與放開 (同時綁定觸控與滑鼠)
             const onMove = (me) => {
                 const curX = getEventX(me);
                 const curY = getEventY(me);
                 
                 if (Math.abs(curX - startX) > 5 || Math.abs(curY - startY) > 5) {
                     moved = true;
-                    // 防止手機頁面跟著手指滾動 (重要！)
                     if(me.cancelable) me.preventDefault(); 
                     
                     card.style.left = (curX - offset.x) + 'px';
@@ -183,14 +221,12 @@
             };
 
             const onUp = () => {
-                // 移除監聽
                 document.removeEventListener('mousemove', onMove);
                 document.removeEventListener('mouseup', onUp);
                 document.removeEventListener('touchmove', onMove);
                 document.removeEventListener('touchend', onUp);
 
                 if (!moved) {
-                    // 執行點擊功能 (翻面、複製連結等)
                     if (card.classList.contains('polaroid-card')) card.classList.toggle('flipped');
                     if (card.classList.contains('sticky-note')) copyURL();
                 }
@@ -202,12 +238,11 @@
             document.addEventListener('touchend', onUp);
         };
 
-        // 綁定起始事件
         card.addEventListener('mousedown', onDown);
         card.addEventListener('touchstart', onDown, { passive: false });
     });
 
-    // --- 以下維持你原本的功能 (診斷、音樂、小遊戲) ---
+    // --- 功能函式 (音樂、診斷、分享、小遊戲) ---
     const audio = document.getElementById('audio');
     const audioSpecial = document.getElementById('audioSpecial');
     const playerCard = document.getElementById('playerCard');
@@ -229,7 +264,6 @@
         alert("連結已複製，感謝支持！"); 
     }
 
-    // 小遊戲區 (也要加入觸控阻斷)
     const emoIcons = ['💔','💌','☁️','🕊️','💔','💌','☁️','🕊️'];
     let shuffled = emoIcons.sort(() => 0.5 - Math.random());
     const grid = document.getElementById('gameGrid');
@@ -239,8 +273,6 @@
     shuffled.forEach(icon => {
         const tile = document.createElement('div');
         tile.className = 'tile'; tile.innerHTML = icon;
-        
-        // 關鍵：阻止觸控/滑鼠事件傳給底層卡片
         const stopProp = (e) => e.stopPropagation();
         tile.onmousedown = stopProp;
         tile.ontouchstart = stopProp;
