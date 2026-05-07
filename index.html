@@ -1,277 +1,473 @@
 <!DOCTYPE html>
+
 <html lang="zh-TW">
+
 <head>
+
     <meta charset="UTF-8">
+
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>終於明白 | 完美比例互動桌面</title>
+
+    <title>終於明白 | 黃宇琛 Official Desktop</title>
+
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
     <style>
+
         @font-face {
+
             font-family: 'ChenYuluoyan';
+
             src: url('ChenYuluoyan-2.0-Thin.ttf') format('truetype');
+
         }
+
+
 
         :root {
+
             --bg: #1e1e1e;
+
             --hand: 'ChenYuluoyan', cursive;
-            --accent: #3b82f6;
+
         }
+
+
 
         * { margin: 0; padding: 0; box-sizing: border-box; }
+
         
+
         body {
+
             background-color: var(--bg);
-            background-image: url('https://www.transparenttextures.com/patterns/dark-wood.png'); 
+
+            background-image: url('https://www.transparenttextures.com/patterns/dark-wood.png'); /* 桌面木紋質感 */
+
             height: 100vh; width: 100vw;
+
             overflow: hidden;
+
             font-family: 'Noto Sans TC', sans-serif;
+
             perspective: 2000px;
+
         }
+
+
 
         .desk-overlay {
+
             position: fixed; top:0; left:0; width:100%; height:100%;
+
             background: radial-gradient(circle at center, transparent 0%, rgba(0,0,0,0.4) 100%);
+
             pointer-events: none; z-index: 1000;
+
         }
+
+
+
+        /* 記憶卡片基礎樣式 */
 
         .card {
-            position: absolute;
-            background: white;
-            box-shadow: 2px 5px 15px rgba(0,0,0,0.3);
-            cursor: grab;
-            user-select: none;
-            transform-style: preserve-3d;
-        }
-        .card:active { cursor: grabbing; box-shadow: 10px 20px 40px rgba(0,0,0,0.5); z-index: 999 !important; }
 
-        /* --- 比例校正區 --- */
+            position: absolute;
+
+            background: white;
+
+            box-shadow: 2px 5px 15px rgba(0,0,0,0.3);
+
+            cursor: grab;
+
+            transition: transform 0.1s ease-out, box-shadow 0.3s;
+
+            user-select: none;
+
+            transform-style: preserve-3d;
+
+        }
+
+        .card:active { cursor: grabbing; box-shadow: 10px 20px 40px rgba(0,0,0,0.5); }
+
+
 
         /* 1. 翻轉拍立得 */
-        .polaroid-card { width: 250px; height: 320px; }
+
+        .polaroid-card {
+
+            width: 280px; height: 350px;
+
+            top: 15%; left: 10%;
+
+        }
+
         .card-inner {
+
             position: relative; width: 100%; height: 100%;
+
             transition: transform 0.6s; transform-style: preserve-3d;
+
         }
+
         .card.flipped .card-inner { transform: rotateY(180deg); }
+
+
+
         .card-front, .card-back {
-            position: absolute; width: 100%; height: 100%; backface-visibility: hidden; padding: 12px;
+
+            position: absolute; width: 100%; height: 100%;
+
+            backface-visibility: hidden; padding: 15px;
+
         }
-        .card-front img { width: 100%; height: 210px; object-fit: cover; pointer-events: none; }
-        .card-front .caption { font-family: var(--hand); font-size: 1.8rem; text-align: center; margin-top: 10px; color: #333;}
-        .card-back { background: #fafafa; transform: rotateY(180deg); display: flex; align-items: center; justify-content: center; text-align: center; border: 1px solid #ddd; font-family: var(--hand); font-size: 1.1rem; }
+
+        .card-front { background: #fff; display: flex; flex-direction: column; }
+
+        .card-front img { width: 100%; height: 250px; object-fit: cover; pointer-events: none; }
+
+        .card-front .caption { font-family: var(--hand); font-size: 2rem; text-align: center; margin-top: 15px; }
+
+        
+
+        .card-back {
+
+            background: #fafafa; transform: rotateY(180deg);
+
+            display: flex; flex-direction: column; justify-content: center; align-items: center;
+
+            text-align: center; border: 1px solid #ddd;
+
+        }
+
+
 
         /* 2. 磁帶播放器 */
-        .cassette-card { width: 220px; height: 140px; background: #333; color: #eee; border-radius: 10px; padding: 10px; }
-        .cassette-reels { display: flex; justify-content: space-around; margin: 15px 0; }
-        .reel { width: 35px; height: 35px; border: 4px dashed #666; border-radius: 50%; }
+
+        .cassette-card {
+
+            width: 240px; height: 150px;
+
+            background: #333; color: #eee;
+
+            border-radius: 10px; padding: 10px;
+
+            bottom: 10%; right: 5%;
+
+        }
+
+        .cassette-reels {
+
+            display: flex; justify-content: space-around; margin: 15px 0;
+
+        }
+
+        .reel {
+
+            width: 40px; height: 40px; border: 4px dashed #666; border-radius: 50%;
+
+        }
+
         .playing .reel { animation: spin 3s linear infinite; }
+
         @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
 
-        /* 3. 惡搞 CD-R */
-        .cd-card { width: 160px; height: 160px; border-radius: 50%; background: linear-gradient(135deg, #ddd 0%, #999 50%, #ddd 100%); display: flex; align-items: center; justify-content: center; border: 8px solid rgba(255,255,255,0.2); }
-        .cd-center { width: 30px; height: 30px; background: #222; border-radius: 50%; }
-        .cd-label { position: absolute; font-family: var(--hand); color: #444; font-size: 1rem; top: 25px; transform: rotate(-15deg); }
 
-        /* 4. 心理測驗考卷 - 強制窄比例 */
-        .quiz-card { width: 200px; background: #fffdf0; padding: 15px; border-top: 3px solid #e2e8f0; }
-        .quiz-opt { display: block; margin: 8px 0; padding: 6px; border: 1px dashed #ccc; cursor: pointer; font-family: var(--hand); font-size: 1rem; text-align: center; }
 
-        /* 5. 記憶對對碰小遊戲 - 徹底修復比例 */
-        .game-card { 
-            width: 220px; /* 固定卡片寬度 */
-            background: rgba(255,255,255,0.2); 
-            backdrop-filter: blur(10px); 
-            border: 1px solid rgba(255,255,255,0.3); 
-            padding: 15px; 
-            color: white; 
-        }
-        .game-grid { 
-            display: grid; 
-            grid-template-columns: repeat(4, 1fr); 
-            gap: 8px; 
-            margin-top: 10px; 
-            width: 100%; /* 寬度撐滿容器 */
-        }
-        .tile { 
-            aspect-ratio: 1 / 1; /* 強制 1:1 正方形 */
-            width: 100%; /* 根據 grid 自動分配 */
-            background: rgba(255,255,255,0.2); 
-            border-radius: 4px; 
-            cursor: pointer; 
-            display: flex; 
-            align-items: center; 
-            justify-content: center; 
-            font-size: 1.2rem; 
-            color: transparent; 
-        }
-        .tile.open { background: white; color: #333; }
+        /* 3. 宣傳便利貼 */
 
-        /* 6. 其他碎片 */
-        .sticky-note { width: 130px; height: 130px; background: #fef08a; padding: 12px; font-family: var(--hand); font-size: 1.1rem; }
-        .scrap { width: 170px; padding: 15px; background: rgba(255,255,255,0.9); font-family: var(--hand); font-size: 1.3rem; border-left: 3px solid #93c5fd; }
-        .letter-card { width: 240px; padding: 20px; background: #fff9f0; font-family: var(--hand); }
+        .sticky-note {
+
+            width: 180px; height: 180px;
+
+            background: #fef08a; padding: 20px;
+
+            font-family: var(--hand); font-size: 1.4rem;
+
+            box-shadow: 2px 2px 10px rgba(0,0,0,0.1);
+
+            top: 40%; right: 15%;
+
+        }
+
+
+
+        /* 4. 點閱清單 (老信紙) */
+
+        .letter-card {
+
+            width: 320px; padding: 40px;
+
+            background: #fff9f0;
+
+            font-family: var(--hand);
+
+            top: 20%; right: 35%;
+
+        }
+
+        .platform-link {
+
+            display: block; text-decoration: none; color: #555;
+
+            margin: 15px 0; font-size: 1.5rem; transition: 0.2s;
+
+        }
+
+        .platform-link:hover { color: #3b82f6; transform: scale(1.05); }
+
+
+
+        /* 5. 歌詞殘片 */
+
+        .scrap {
+
+            width: 200px; padding: 20px;
+
+            background: rgba(255,255,255,0.9);
+
+            font-family: var(--hand); font-size: 1.6rem;
+
+            border-left: 3px solid #93c5fd;
+
+        }
+
+
 
     </style>
+
 </head>
+
 <body>
+
+
 
     <div class="desk-overlay"></div>
 
-    <div class="card polaroid-card draggable" data-action="flip" style="top: 10%; left: 5%;">
+
+
+    <div class="card polaroid-card draggable" onclick="checkFlip(event, this)">
+
         <div class="card-inner">
+
             <div class="card-front">
+
                 <img src="終於明白.jpg" alt="終於明白">
+
                 <div class="caption">終於明白</div>
+
             </div>
+
             <div class="card-back">
-                錄這句的時候，<br>想起了那個下午的陽光。
+
+                <p style="font-family: var(--hand); font-size: 1.2rem;">
+
+                    2026.04.18<br><br>
+
+                    錄這句的時候，<br>想起了那個下午的陽光。<br>其實，我還是沒能忘記。
+
+                </p>
+
             </div>
+
         </div>
+
     </div>
 
-    <div class="card cassette-card draggable" id="playerCard" style="bottom: 5%; left: 5%;">
-        <div style="font-size: 0.6rem; text-align: center;">終於明白 (Original)</div>
-        <div class="cassette-reels"><div class="reel"></div><div class="reel"></div></div>
-        <button onclick="playMusic('main')" style="width:100%; background:none; border:1px solid #555; color:#fff; cursor:pointer; padding:5px; font-family: var(--hand);">PLAY</button>
-    </div>
 
-    <div class="card cd-card draggable" data-action="troll" style="top: 5%; right: 5%;">
-        <div class="cd-label">別聽(惡搞)</div>
-        <div class="cd-center"></div>
-    </div>
 
-    <div class="card quiz-card draggable" style="top: 40%; left: 40%;">
-        <h4 style="font-family: var(--hand); font-size: 1.2rem; text-align:center;">遺憾診斷書</h4>
-        <div id="quizBody">
-            <span class="quiz-opt" data-ans="1">大聲告別</span>
-            <span class="quiz-opt" data-ans="2">默默離開</span>
+    <div class="card cassette-card draggable" id="playerCard">
+
+        <div style="font-size: 0.7rem; text-align: center; letter-spacing: 2px;">SIDE A: 終於明白</div>
+
+        <div class="cassette-reels">
+
+            <div class="reel"></div>
+
+            <div class="reel"></div>
+
         </div>
+
+        <button onclick="togglePlay()" style="width:100%; background:none; border:1px solid #555; color:#fff; cursor:pointer; padding:5px; font-family: var(--hand);">
+
+            PUSH TO PLAY
+
+        </button>
+
     </div>
 
-    <div class="card game-card draggable" style="bottom: 10%; right: 5%;">
-        <p style="font-family: var(--hand); font-size: 0.9rem; text-align:center;">歌詞配對</p>
-        <div class="game-grid" id="gameGrid"></div>
+
+
+    <div class="card sticky-note draggable" onclick="copyURL()">
+
+        <p>點我一下，<br>幫我把這首歌<br>分享給那個<br>你終於明白的人。</p>
+
     </div>
 
-    <div class="card sticky-note draggable" data-action="copy" style="top: 40%; right: 15%;">
-        分享這首歌。
+
+
+    <div class="card letter-card draggable">
+
+        <h3 style="font-size: 2rem; margin-bottom: 20px; border-bottom: 1px solid #ddd;">點閱平台</h3>
+
+        <a href="https://streetvoice.com/yuchen0918/songs/775432/" class="platform-link" target="_blank">StreetVoice</a>
+
+        <a href="https://open.spotify.com/album/0" class="platform-link" target="_blank">Spotify</a>
+
+        <a href="https://www.kkbox.com/tw/tc/album/N2.mBscWl4R5x7E99N" class="platform-link" target="_blank">KKBOX</a>
+
+        <a href="https://music.apple.com/tw/album/終於明白/1739545585" class="platform-link" target="_blank">Apple Music</a>
+
+        <a href="https://music.youtube.com/watch?v=R9Z9W8m8m8" class="platform-link" target="_blank">YouTube Music</a>
+
     </div>
 
-    <div class="card letter-card draggable" style="top: 15%; left: 45%;">
-        <h3 style="font-size: 1.4rem; margin-bottom: 5px;">點閱平台</h3>
-        <a href="https://streetvoice.com/yuchen0918/songs/775432/" class="platform-link" target="_blank" style="text-decoration:none; color:#555; display:block; margin:5px 0;">StreetVoice</a>
-        <a href="https://open.spotify.com/album/0" class="platform-link" target="_blank" style="text-decoration:none; color:#555; display:block; margin:5px 0;">Spotify</a>
+
+
+    <div class="card scrap draggable" style="top:60%; left:40%;">
+
+        我終於明白，<br>原來不曾擁有過。
+
     </div>
 
-    <audio id="audioMain" src="終於明白.mp3" loop></audio>
-    <audio id="audioTroll" src="終於明白_DJ版.mp3" loop></audio>
+
+
+    <div class="card scrap draggable" style="top:10%; left:50%;">
+
+        離開對你我都好。
+
+    </div>
+
+
+
+    <audio id="audio" src="終於明白.mp3" loop></audio>
+
+
 
     <script>
-        let highestZ = 10;
+
+        // 1. 初始化位置與隨機旋轉
+
         const cards = document.querySelectorAll('.draggable');
 
+        let highestZ = 10;
+
+
+
         cards.forEach(card => {
-            card.style.transform = `rotate(${Math.random() * 12 - 6}deg)`;
+
+            const randomRot = Math.floor(Math.random() * 20) - 10;
+
+            card.style.transform = `rotate(${randomRot}deg)`;
+
             
-            let isMoving = false;
-            let startX, startY;
-            let offset = { x: 0, y: 0 };
+
+            // 隨機初始散落位置 (讓桌面看起來自然)
+
+            if(!card.style.top) card.style.top = (Math.random() * 50 + 10) + "%";
+
+            if(!card.style.left) card.style.left = (Math.random() * 60 + 10) + "%";
+
+
+
+            // 拖拽邏輯
+
+            let isDragging = false;
+
+            let startPos = { x: 0, y: 0 };
+
+            let currentPos = { x: 0, y: 0 };
+
+
 
             card.addEventListener('mousedown', (e) => {
+
                 if(e.target.tagName === 'A' || e.target.tagName === 'BUTTON') return;
 
-                isMoving = false;
-                startX = e.clientX;
-                startY = e.clientY;
-                
+                isDragging = true;
+
                 highestZ++;
+
                 card.style.zIndex = highestZ;
-                
-                offset.x = e.clientX - card.offsetLeft;
-                offset.y = e.clientY - card.offsetTop;
 
-                const onMouseMove = (moveEvent) => {
-                    // 若移動超過 5px，判定為拖拽
-                    if (Math.abs(moveEvent.clientX - startX) > 5 || Math.abs(moveEvent.clientY - startY) > 5) {
-                        isMoving = true;
-                        card.style.left = (moveEvent.clientX - offset.x) + 'px';
-                        card.style.top = (moveEvent.clientY - offset.y) + 'px';
-                    }
-                };
+                startPos.x = e.clientX - card.offsetLeft;
 
-                const onMouseUp = (upEvent) => {
-                    document.removeEventListener('mousemove', onMouseMove);
-                    document.removeEventListener('mouseup', onMouseUp);
+                startPos.y = e.clientY - card.offsetTop;
 
-                    // 只有在「沒有大幅移動」的情況下，才觸發卡片活動
-                    if (!isMoving) {
-                        handleTrigger(upEvent, card);
-                    }
-                };
-
-                document.addEventListener('mousemove', onMouseMove);
-                document.addEventListener('mouseup', onMouseUp);
             });
+
+
+
+            document.addEventListener('mousemove', (e) => {
+
+                if (!isDragging) return;
+
+                card.style.left = (e.clientX - startPos.x) + 'px';
+
+                card.style.top = (e.clientY - startPos.y) + 'px';
+
+                card.style.margin = '0';
+
+            });
+
+
+
+            document.addEventListener('mouseup', () => isDragging = false);
+
         });
 
-        function handleTrigger(e, el) {
-            const action = el.getAttribute('data-action');
-            const target = e.target;
 
-            if (action === 'flip') el.classList.toggle('flipped');
-            if (action === 'troll') playMusic('troll');
-            if (action === 'copy') copyURL();
-            
-            if (target.classList.contains('quiz-opt')) {
-                diagnose(target.getAttribute('data-ans'));
-            }
+
+        // 2. 翻轉卡片邏輯 (偵測是拖拽還是點擊)
+
+        function checkFlip(e, el) {
+
+            // 如果是在拖拽，就不觸發翻轉
+
+            el.classList.toggle('flipped');
+
         }
 
-        const aMain = document.getElementById('audioMain');
-        const aTroll = document.getElementById('audioTroll');
-        const pCard = document.getElementById('playerCard');
 
-        function playMusic(type) {
-            if(type === 'main') {
-                aTroll.pause();
-                if(aMain.paused) { aMain.play(); pCard.classList.add('playing'); }
-                else { aMain.pause(); pCard.classList.remove('playing'); }
+
+        // 3. 音樂播放
+
+        const audio = document.getElementById('audio');
+
+        const playerCard = document.getElementById('playerCard');
+
+        function togglePlay() {
+
+            if(audio.paused) {
+
+                audio.play();
+
+                playerCard.classList.add('playing');
+
             } else {
-                aMain.pause(); pCard.classList.remove('playing');
-                aTroll.currentTime = 0; aTroll.play();
-                alert("💿 切換：終於明白 (DJ版)");
+
+                audio.pause();
+
+                playerCard.classList.remove('playing');
+
             }
+
         }
 
-        function diagnose(val) {
-            document.getElementById('quizBody').innerHTML = `<p style="font-family:var(--hand); font-size:1rem; color:#64748b; padding:10px; text-align:center;">${val==1?"你正處於釋懷邊緣。":"你明白得比誰都清醒。"}</p>`;
+
+
+        // 4. 分享功能
+
+        function copyURL() {
+
+            navigator.clipboard.writeText(window.location.href);
+
+            alert("連結已複製，感謝支持作品！");
+
         }
 
-        function copyURL() { navigator.clipboard.writeText(window.location.href); alert("連結已複製！"); }
-
-        // 遊戲初始化
-        const icons = ['🎸','🥁','🎸','🥁','🎹','🎤','🎹','🎤'];
-        let shuffled = icons.sort(() => 0.5 - Math.random());
-        const grid = document.getElementById('gameGrid');
-        let selected = [];
-
-        shuffled.forEach(icon => {
-            const tile = document.createElement('div');
-            tile.className = 'tile'; 
-            tile.innerHTML = icon;
-            tile.onclick = (e) => {
-                e.stopPropagation(); // 防止觸發父層 card 點擊
-                if(selected.length < 2 && !tile.classList.contains('open')) {
-                    tile.classList.add('open'); 
-                    selected.push(tile);
-                    if(selected.length === 2) {
-                        if(selected[0].innerHTML === selected[1].innerHTML) selected = [];
-                        else setTimeout(() => { selected.forEach(t => t.classList.remove('open')); selected = []; }, 500);
-                    }
-                }
-            };
-            grid.appendChild(tile);
-        });
     </script>
+
 </body>
+
 </html>
