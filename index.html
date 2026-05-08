@@ -10,7 +10,19 @@
             font-family: 'ChenYuluoyan';
             src: url('ChenYuluoyan-2.0-Thin.ttf') format('truetype');
         }
+        html, body {
+    height: 100%;
+    width: 100%;
+    overflow: hidden; /* 徹底禁止頁面捲動 */
+    position: fixed; /* 防止手機瀏覽器因拖曳導致網頁晃動 */
+}
 
+/* 確保背景圖層填滿且不被縮放 */
+.desk-overlay {
+    position: fixed;
+    top: 0; left: 0; width: 100%; height: 100%;
+    z-index: 1000;
+}
         :root {
             --bg: #1e1e1e;
             --hand: 'ChenYuluoyan', cursive;
@@ -171,7 +183,83 @@
     };
     window.addEventListener('mousedown', removeHint);
     window.addEventListener('touchstart', removeHint);
+    // --- 2. 核心修正：初始化卡片位置與手機比例防跑版 ---
+    cards.forEach(card => {
+        // 隨機旋轉
+        card.style.transform = `rotate(${Math.floor(Math.random() * 16) - 8}deg)`;
+        
+        // 修正：針對手機螢幕的安全範圍 (15% ~ 70% 之間，避免卡片貼邊)
+        if(!card.style.top) card.style.top = (Math.random() * 60 + 15) + "%";
+        if(!card.style.left) card.style.left = (Math.random() * 50 + 10) + "%";
 
+        // 主題置頂
+        if (card.classList.contains('polaroid-card')) {
+            card.style.zIndex = 50;
+            highestZ = 51; 
+        } else {
+            card.style.zIndex = Math.floor(Math.random() * 10) + 10;
+        }
+
+        // --- 3. 全相容拖曳邏輯 ---
+        let moved = false;
+        let startX, startY;
+        let offset = { x: 0, y: 0 };
+
+        const getEventX = (e) => e.touches ? e.touches[0].clientX : e.clientX;
+        const getEventY = (e) => e.touches ? e.touches[0].clientY : e.clientY;
+
+        const onDown = (e) => {
+            if(e.target.closest('button') || e.target.closest('a') || e.target.closest('.tile') || e.target.closest('.quiz-opt')) return;
+            
+            // 點擊卡片時防止預設行為 (避免手機選取文字)
+            if(e.type === 'touchstart') e.preventDefault(); 
+
+            moved = false;
+            startX = getEventX(e);
+            startY = getEventY(e);
+            
+            highestZ++;
+            card.style.zIndex = highestZ;
+            
+            offset.x = startX - card.offsetLeft;
+            offset.y = startY - card.offsetTop;
+
+            const onMove = (me) => {
+                const curX = getEventX(me);
+                const curY = getEventY(me);
+                
+                if (Math.abs(curX - startX) > 3 || Math.abs(curY - startY) > 3) {
+                    moved = true;
+                    // 【關鍵修正】強制阻斷瀏覽器原生滾動
+                    if(me.cancelable) me.preventDefault(); 
+                    
+                    card.style.left = (curX - offset.x) + 'px';
+                    card.style.top = (curY - offset.y) + 'px';
+                    card.style.margin = '0';
+                }
+            };
+
+            const onUp = () => {
+                document.removeEventListener('mousemove', onMove);
+                document.removeEventListener('mouseup', onUp);
+                document.removeEventListener('touchmove', onMove);
+                document.removeEventListener('touchend', onUp);
+
+                if (!moved) {
+                    if (card.classList.contains('polaroid-card')) card.classList.toggle('flipped');
+                    if (card.classList.contains('sticky-note')) copyURL();
+                }
+            };
+
+            document.addEventListener('mousemove', onMove, { passive: false });
+            document.addEventListener('mouseup', onUp);
+            document.addEventListener('touchmove', onMove, { passive: false });
+            document.addEventListener('touchend', onUp);
+        };
+
+        card.addEventListener('mousedown', onDown);
+        card.addEventListener('touchstart', onDown, { passive: false });
+    });
     // --- 2. 卡片初始化 ---
     cards.forEach(card => {
         card.style.transform = `rotate(${Math.floor(Math.random() * 20) - 10}deg)`;
